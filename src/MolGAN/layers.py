@@ -1,5 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
+# from MolGAN.gnn_generator import GNNEncoder, GNNDecoder
+
 
 class GraphConvolutionLayer(layers.Layer):
     def __init__(self, unit, activation=None, dropout_rate=0., edges=5, name='', **kwargs):
@@ -183,5 +185,20 @@ class MultiDenseLayer(layers.Layer):
     
     
     
-    
+    import tensorflow as tf
+
+class GumbelSoftmax(tf.keras.layers.Layer):
+    def __init__(self, tau=1.0, hard=False, **kwargs):
+        super().__init__(**kwargs)
+        self.tau = tau
+        self.hard = hard
+
+    def call(self, logits):
+        gumbel_noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(logits), minval=0, maxval=1)))
+        y = tf.nn.softmax((logits + gumbel_noise) / self.tau)
+        if self.hard:
+            y_hard = tf.one_hot(tf.argmax(y, axis=-1), depth=tf.shape(logits)[-1])
+            y = tf.stop_gradient(y_hard - y) + y
+        return y
+
     
